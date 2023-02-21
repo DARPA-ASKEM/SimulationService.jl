@@ -1,0 +1,10 @@
+name = "SimulationService"
+uuid = "2d987a42-cea3-4496-a8d7-7e00e8bae047"
+authors = ["anand jain <anandj@uchicago.edu>"]
+version = "0.1.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
