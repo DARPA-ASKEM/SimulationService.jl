@@ -54,16 +54,6 @@ p2 = PetriNet(m2)
 isos = isomorphisms(m, m2)
 iso = only(isos)
 
-
-""" 
-since we aren't really doing anything with the hash, 
-lets explore just having an id <-> model bijection
-
-todo convert to using FinFuncitons instead of Bijections.jl?
-
-"""
-
-# b = Bijection{Int, LabelledPetriNet}()
 b[1] = m
 b(m)
 
@@ -90,8 +80,6 @@ for now, i'm going to have another id->sys bijection. which is a bit clunky for 
 the general question is what part of model lowering (to a simulatable type) should be stored (should they all be stored ie, Petri, Sys, and Prob)
     
 """
-# b = Bijection{Int, LabelledPetriNet}()
-# b2 = Bijection{Int, ODESystem}()
 b2[1] = ODESystem(m)
 
 
@@ -140,7 +128,7 @@ we could stringify and parse, but a naive test shows
 julia> Tsit5()
 Tsit5(stage_limiter! = trivial_limiter!, step_limiter! = trivial_limiter!, thread = static(false))
 
-and eval(parse(x)) gives `static not defined`, so I see lots of annoying problems with this approach
+and eval(parse(s)) gives `static not defined`, so I see lots of annoying problems with this approach
 
 for now i am punting on the issue and letting DiffEq choose the solver 
 """
@@ -155,7 +143,7 @@ x = oxygen_solve(prob, j)
 req = HTTP.Request("POST", "/solve/1", [], j)
 
 "these are only "
-df = DataFrame(sol)
+df = DataFrame(x)
 df2 = DataFrame(jsontable(JSON3.read(internalrequest(req).body)))
 mat1 = Array(df)
 mat2 = Array(df2)

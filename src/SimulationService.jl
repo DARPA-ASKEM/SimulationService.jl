@@ -1,6 +1,6 @@
 module SimulationService
 
-using AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen
+using AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP
 using Catlab.CategoricalAlgebra
 using Catlab.CategoricalAlgebra.FinSets
 using Bijections
@@ -31,10 +31,21 @@ system_id(r) = bij_id!(b2, ODESystem(parse_json_acset(AlgebraicPetri.LabelledPet
 function parse_args_kws(b)
     j =  JSON3.read(b)
     args = JSON3.read(JSON3.write(j["args"]))
-    args = keys(args) .=> collect.(values(args))
+    args = keys(args) .=> collect.(values(args)) # otherwise all the arrays are Any and `solve` fails
     kws = JSON3.read(JSON3.write(j["kws"]))
     namedtuple(args), namedtuple(kws)
 end
+
+# function _to_post(f, b)
+#     args, kws = parse_args_kws(b)
+#     (id, args) = args
+#     f(d[id], values(args)...; kws...)
+# end
+
+# macro to_post(ex)
+#     @assert ex.head == :call
+#     Expr(:macrocall, Symbol("@post"), f, :(r::HTTP.Request)) => :(r -> _to_post($f, r.body))
+# end
 
 "solve an ODEProblem, but given a JSON body with args/kws (from a POST)"
 function oxygen_solve(prob, j)
