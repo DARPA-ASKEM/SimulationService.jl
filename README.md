@@ -5,4 +5,7 @@ An Oxygen.jl REST API to simulate Petri Nets from AlgebraicPetri.jl
 see `test/runtests.jl` for usage and `test/api.jl` to serve
 
 todo:
-* figure out kwargs and settings
+- [ ] read https://chrisrackauckas.github.io/ASKEM_Evaluation_Staging/dev/Scenario3/Evaluation_Scenario_3/
+- [ ] job_id generated endpoint
+- [ ] progressbar endpoint
+- [ ] observable solve endpoint
