@@ -1,0 +1,18 @@
+version: '3'
+services:
+  sim-service:
+    build:
+      dockerfile: Dockerfile
+    container_name: sim-service
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/docs"]
+      interval: 30s
+      retries: 10
+    expose:
+      - 8080
+    ports:
+      - published: 8095
+        target: 8080
+    volumes:
+      - ./src:/sim-service/src
+
