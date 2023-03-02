@@ -11,7 +11,7 @@ services:
     expose:
       - 8080
     ports:
-      - published: 8095
+      - published: 8080
         target: 8080
     volumes:
       - ./src:/sim-service/src
