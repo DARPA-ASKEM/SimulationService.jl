@@ -7,6 +7,9 @@ using Bijections
 using ModelingToolkit, OrdinaryDiffEq, DifferentialEquations
 using OrderedCollections, NamedTupleTools
 @info "usings"
+logdir = joinpath(@__DIR__, "logs")
+mkpath(logdir)
+
 register!() 
 
 m = _seird = AlgebraicPetri.LabelledPetriNet(
@@ -71,7 +74,8 @@ bij_id!(b3, prob)
 
 _args = (; u0, tspan, p)
 kws = (; saveat=0.1, abstol=1e-7, reltol=1e-7)
-post_body = JSON3.write(Dict("args" => OrderedDict(pairs(_args)), "kws" => Dict(pairs(kws))))
+post_body_dict = Dict("args" => OrderedDict(pairs(_args)), "kws" => Dict(pairs(kws)))
+post_body = JSON3.write(post_body_dict)
 
 as, ks = parse_args_kws(post_body)
 "this is the pattern that i'd like to use to generate endpoints, by simply taking f(args;kws) but parsing the post body back into orderdict and nt"
@@ -101,3 +105,7 @@ req = HTTP.Request("POST", "/solve/1/CSV", [], post_body)
 csv_resp = internalrequest(req)
 @test csv_resp.status == 200
 @test CSV.read(csv_resp.body, DataFrame) == df
+
+fn = joinpath(logdir, "solve_1_post_body.json")
+JSON3.write(fn, post_body_dict)
+@test isfile(fn)
