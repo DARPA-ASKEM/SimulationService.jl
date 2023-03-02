@@ -89,7 +89,7 @@ function run!()
     register!()
     #document()
     # TODO(five)!: Stop SciML from slowing the server down. (Try `serveparallel`?)
-    serve() # deleting 0.0.0.0 serve for now
+    serve(host="0.0.0.0") # adding back in 0.0.0.0 for Docker
 end
 
 # clean up these egregious exports
