@@ -8,6 +8,8 @@ using Bijections
 using ModelingToolkit, OrdinaryDiffEq, DifferentialEquations
 using OrderedCollections, NamedTupleTools
 using JSONBase
+using EasyModelAnalysis
+
 @info "usings"
 logdir = joinpath(@__DIR__, "logs")
 mkpath(logdir)
@@ -40,6 +42,7 @@ m3 = _seird3 = AlgebraicPetri.LabelledPetriNet(
 )
 
 j = mj = JSON.json(generate_json_acset(m))
+write(joinpath(logdir, "petri.json"), j)
 j2 = mj2 = JSON.json(generate_json_acset(m2))
 
 @info """add models to "database" """
@@ -127,20 +130,21 @@ prob2 = remake(prob; u0=new_defs, p=new_defs)
 "defaults" # allows for a partial map
 
 # named_post supports tspan, defaults, and kws
-named_post = Dict("defaults" => Dict(["S(t)" => 1, "exp" => 3]), "tspan" => [0, 100], "kws" => Dict(["saveat" => 0.1, "abstol" => 1e-7, "reltol" => 1e-7]))
+named_post = Dict("u0" => Dict(["S" => 1]), "p"=>Dict("exp" => 3), "tspan" => [0, 100], "kws" => Dict(["saveat" => 0.1, "abstol" => 1e-7, "reltol" => 1e-7]))
 named_j = JSONBase.json(named_post)
 write(joinpath(logdir, "named_post.json"), named_j)
 
-new_defs = named_json_to_defaults_map(named_post["defaults"])
-@test eltype(first.(collect(new_defs))) <: Symbolics.Symbolic
+new_u0 = named_json_to_defaults_map(named_post["u0"], states(sys))
+new_p = named_json_to_defaults_map(named_post["p"], parameters(sys))
+@test eltype(first.(collect(new_u0))) <: Symbolics.Symbolic
 prob2 = named_remake(prob, named_post)
 # (; S, E, exp) = prob.f.sys
 # S = @nonamespace(S)
 @variables t S(t) E(t)
 @parameters exp
 
-@test prob[S] != new_defs[S]
-@test prob2[S] == new_defs[S]
+@test prob[S] != new_u0[S]
+@test prob2[S] == new_u0[S]
 
 # just a reminder that setindex and getindex on prob works with Symbolics
 # although remake seems more effective here
@@ -153,3 +157,65 @@ req = HTTP.Request("POST", "/named_solve/1", [], named_j)
 resp = internalrequest(req)
 named_resp_df = DataFrame(jsontable(resp.body))
 @test DataFrame(named_sol) == named_resp_df
+
+
+# @parameters S
+# @variables t S(t)
+# D = Differential(t)
+# [D(S) ~ -S*S]
+
+# * solve
+# * get_uncertainty_forecast
+# * get_sensitivity
+# * datafit
+# * bayesian_datafit
+
+get_uncertainty_forecast(prob, sym, t, uncertainp, samples)
+get_sensitivity(prob, t, x, pbounds; samples = 1000)
+
+""
+macro wrap_to_endpoint(f)
+    return quote
+        function $(f)(args...; kws...)
+            return $(f)(args...; kws...)
+        end
+    end
+end
+
+# swaggermarkdown.jl
+# add the curl commands
+# add a petri-net to the database
+# doc the endpoints for swagger
+# use split p and u0 instead of defaults for named_solve
+# wrap datafit/bayesian datafit to endpoints
+register!()
+serve()
+
+# run this in another terminal
+cmd = `
+curl --location --request POST 'localhost:8080/petri_id/' \
+--header 'Content-Type: application/json' \
+--data-binary '@data/petri_post.json'
+`
+
+cmd = `
+curl --location --request POST 'localhost:8080/solve/1' \
+--header 'Content-Type: application/json' \
+--data-binary '@data/solve_1_post_body.json'
+`
+
+cmd = `
+curl --location --request POST 'localhost:8080/named_solve/1' \
+--header 'Content-Type: application/json' \
+--data-binary '@data/named_solve.json'
+`
+
+cmd = `
+curl --location --request POST 'localhost:8080/model/' \
+--header 'Content-Type: application/json' \
+--data-binary '@data/petri_post.json'
+`
+
+
+
+s = read(cmd, String)
