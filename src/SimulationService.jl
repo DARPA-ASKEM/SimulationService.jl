@@ -59,6 +59,26 @@ end
 
 csv_solve(r, i) = csv_response(oxygen_solve(b3[parse(Int, i)], r.body))
 
+function named_json_to_defaults_map(named_post_defs)
+    ps = collect(named_post_defs)
+    ks, vs = unzip(ps)
+    s1 = Symbol.(ks)
+    sys_vars = [states(sys); parameters(sys)]
+    s2 = Symbol.(sys_vars)
+    d = Dict(s2 .=> sys_vars)
+    Dict([d[s2[findfirst(x -> x == symbol, s2)]] for symbol in s1] .=> vs)
+end
+
+function named_remake(prob, named_post)
+    defs = named_json_to_defaults_map(named_post["defaults"])
+    something(get(named_post, "tspan1", nothing), prob.tspan)
+    remake(prob; u0=defs, p=defs, tspan=named_post["tspan"], namedtuple(named_post["kws"])...)
+end
+
+function named_solve(prob, named_post)
+    solve(named_remake(prob, named_post))
+end
+
 # doing this we can take the outer product of the EMA functions that return dataframes and the content-type serializations for the output type (DataFrame)
 function csv_response(sol)
     io = IOBuffer()

@@ -1,3 +1,4 @@
+@time_imports using SimulationService, AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP, Catlab.CategoricalAlgebra, Test, Catlab.CategoricalAlgebra.FinSets, Bijections, ModelingToolkit, OrdinaryDiffEq, DifferentialEquations, OrderedCollections, NamedTupleTools
 using SimulationService
 using AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP
 using Catlab.CategoricalAlgebra
@@ -6,11 +7,12 @@ using Catlab.CategoricalAlgebra.FinSets
 using Bijections
 using ModelingToolkit, OrdinaryDiffEq, DifferentialEquations
 using OrderedCollections, NamedTupleTools
+using JSONBase
 @info "usings"
 logdir = joinpath(@__DIR__, "logs")
 mkpath(logdir)
 
-register!() 
+register!()
 
 m = _seird = AlgebraicPetri.LabelledPetriNet(
     [:S, :E, :I, :R, :D],
@@ -109,3 +111,42 @@ csv_resp = internalrequest(req)
 fn = joinpath(logdir, "solve_1_post_body.json")
 JSON3.write(fn, post_body_dict)
 @test isfile(fn)
+
+defs = ModelingToolkit.defaults(sys)
+
+new_defs = [states(sys) .=> rand(length(states(sys))); parameters(sys) .=> rand(length(parameters(sys)))]
+# remake(sys; defaults=new_defs)
+prob
+
+prob2 = remake(prob; u0=new_defs, p=new_defs)
+prob2 = remake(prob; u0=new_defs, p=new_defs)
+
+# named_solve # example
+# options 
+"tspan" => [0, 100]
+"defaults" # allows for a partial map
+
+# named_post supports tspan, defaults, and kws
+named_post = Dict("defaults" => Dict(["S(t)" => 1, "exp" => 3]), "tspan" => [0, 100], "kws" => Dict(["saveat" => 0.1, "abstol" => 1e-7, "reltol" => 1e-7]))
+JSONBase.json(named_post)
+
+
+
+new_defs = named_json_to_defaults_map(named_post["defaults"])
+@test eltype(first.(collect(new_defs))) <: Symbolics.Symbolic
+prob2 = named_remake(prob, named_post)
+# (; S, E, exp) = prob.f.sys
+# S = @nonamespace(S)
+@variables t S(t) E(t)
+@parameters exp
+
+@test prob[S] != new_defs[S]
+@test prob2[S] == new_defs[S]
+
+# just a reminder that setindex and getindex on prob works with Symbolics
+# although remake seems more effective here
+# [prob[k] = v for (k, v) in new_defs]
+
+named_solve(prob, named_post) 
+
+using SymbolicIndexingInterface
