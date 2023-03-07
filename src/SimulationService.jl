@@ -33,10 +33,17 @@ function post_model(r)
     petri = parse_json_acset(AlgebraicPetri.LabelledPetriNet, String(r.body))
     is_new = petri ∉ b.range
     id = bij_id!(b, petri)
+
     sys = ODESystem(petri)
+    sts = states(sys)
+    ps= parameters(sys)
+    defs = [sts .=> zeros(length(sts)); ps .=> zeros(length(ps))]
+    sys = ODESystem(petri; defaults=defs, tspan=(0.0, 100.0))
+    # remake(sys, defaults=defs, tspan=(0.0, 100.0))
     id2 = bij_id!(b2, sys)
+
     # ==(prob, prob) is broken
-    prob = ODEProblem(sys, zeros(length(states(sys))), (0.0, 100.0), zeros(length(parameters(sys))))
+    prob = ODEProblem(sys)
     bij_id!(b3, prob)
     # we'd only want to add it to the db if it's not already there
     if is_new
@@ -77,10 +84,10 @@ end
 
 # in both of these solve wrappers we make the call impure by "knowing" to `getindex(b3, model_id)`
 function json_solve(r, i)
-    arraytable(DataFrame(oxygen_solve(b3[parse(Int, i)], r.body)))
+    arraytable(DataFrame(oxygen_solve(model_db.prob[parse(Int, i)], r.body)))
 end
 
-csv_solve(r, i) = csv_response(oxygen_solve(b3[parse(Int, i)], r.body))
+csv_solve(r, i) = csv_response(oxygen_solve(model_db.prob[parse(Int, i)], r.body))
 
 function named_json_to_defaults_map(named_post_defs, sys_vars)
     ps = collect(named_post_defs)
@@ -106,7 +113,7 @@ function named_solve(prob, named_post)
 end
 
 function named_solve_i(r, i)
-    arraytable(DataFrame(named_solve(b3[parse(Int, i)], JSON3.read(r.body))))
+    arraytable(DataFrame(named_solve(model_db.prob[parse(Int, i)], JSON3.read(r.body))))
 end
 
 # doing this we can take the outer product of the EMA functions that return dataframes and the content-type serializations for the output type (DataFrame)
@@ -133,8 +140,8 @@ function register!()
     global b3 = Bijection{Int,ODEProblem}()
     global model_db = DataFrame(petri=[], sys=[], prob=[])
 
-    @post "/petri_id" petri_id
-    @post "/sys_id" system_id
+    # @post "/petri_id" petri_id
+    # @post "/sys_id" system_id
     @post "/model" post_model
     @post "/solve/{i}" json_solve
     @post "/solve/{i}/CSV" csv_solve

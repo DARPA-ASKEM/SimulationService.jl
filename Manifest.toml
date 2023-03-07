@@ -35,7 +35,7 @@ version = "0.4.4"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
-git-tree-sha1 = "cc37d689f599e8df4f464b2fa3870ff7db7492ef"
+path = "../Adapt"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 version = "3.6.1"
 weakdeps = ["StaticArrays"]
@@ -70,8 +70,8 @@ uuid = "b5ca4192-6429-45e5-a2d9-87aec30a685c"
 version = "0.1.6"
 
 [[deps.AlgebraicPetri]]
-deps = ["Catlab", "LabelledArrays", "LinearAlgebra", "Requires", "StatsBase"]
-git-tree-sha1 = "3036a6246db65c6e4837997ba3b4a52e9a023f64"
+deps = ["Catlab", "GeneralizedGenerated", "LabelledArrays", "LinearAlgebra", "Requires", "StatsBase"]
+path = "/Users/anand/.julia/dev/AlgebraicPetri"
 uuid = "4f99eebe-17bf-4e98-b6a1-2c4f205a959b"
 version = "0.8.4"
 
