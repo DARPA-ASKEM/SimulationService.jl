@@ -128,9 +128,8 @@ prob2 = remake(prob; u0=new_defs, p=new_defs)
 
 # named_post supports tspan, defaults, and kws
 named_post = Dict("defaults" => Dict(["S(t)" => 1, "exp" => 3]), "tspan" => [0, 100], "kws" => Dict(["saveat" => 0.1, "abstol" => 1e-7, "reltol" => 1e-7]))
-JSONBase.json(named_post)
-
-
+named_j = JSONBase.json(named_post)
+write(joinpath(logdir, "named_post.json"), named_j)
 
 new_defs = named_json_to_defaults_map(named_post["defaults"])
 @test eltype(first.(collect(new_defs))) <: Symbolics.Symbolic
@@ -147,6 +146,10 @@ prob2 = named_remake(prob, named_post)
 # although remake seems more effective here
 # [prob[k] = v for (k, v) in new_defs]
 
-named_solve(prob, named_post) 
+# register!()
 
-using SymbolicIndexingInterface
+named_sol = solve(prob2)
+req = HTTP.Request("POST", "/named_solve/1", [], named_j)
+resp = internalrequest(req)
+named_resp_df = DataFrame(jsontable(resp.body))
+@test DataFrame(named_sol) == named_resp_df

@@ -1,0 +1,15 @@
+{
+    "tspan": [
+        0,
+        100
+    ],
+    "kws": {
+        "reltol": 1.0e-7,
+        "saveat": 0.1,
+        "abstol": 1.0e-7
+    },
+    "defaults": {
+        "exp": 3,
+        "S(t)": 1
+    }
+}

@@ -21,6 +21,8 @@ function bij_id!(b, m)
     b(m)
 end
 
+unzip(xs) = first.(xs), last.(xs)
+
 petri_id(r) = bij_id!(b, parse_json_acset(AlgebraicPetri.LabelledPetriNet, String(r.body)))
 "here we're assuming that we don't post ODESystems but only get them by posting petrinets"
 system_id(r) = bij_id!(b2, ODESystem(parse_json_acset(AlgebraicPetri.LabelledPetriNet, String(r.body))))
@@ -59,7 +61,7 @@ end
 
 csv_solve(r, i) = csv_response(oxygen_solve(b3[parse(Int, i)], r.body))
 
-function named_json_to_defaults_map(named_post_defs)
+function named_json_to_defaults_map(sys, named_post_defs)
     ps = collect(named_post_defs)
     ks, vs = unzip(ps)
     s1 = Symbol.(ks)
@@ -69,14 +71,20 @@ function named_json_to_defaults_map(named_post_defs)
     Dict([d[s2[findfirst(x -> x == symbol, s2)]] for symbol in s1] .=> vs)
 end
 
+"need to make this take a subset of the allowed keys. 
+right now, tspan, defaults, and kws are allowed."
 function named_remake(prob, named_post)
-    defs = named_json_to_defaults_map(named_post["defaults"])
-    something(get(named_post, "tspan1", nothing), prob.tspan)
-    remake(prob; u0=defs, p=defs, tspan=named_post["tspan"], namedtuple(named_post["kws"])...)
+    defs = named_json_to_defaults_map(prob.f.sys, named_post["defaults"])
+    tspan = something(get(named_post, "tspan", nothing), prob.tspan)
+    remake(prob; u0=defs, p=defs, tspan=tspan, namedtuple(named_post["kws"])...)
 end
 
 function named_solve(prob, named_post)
     solve(named_remake(prob, named_post))
+end
+
+function named_solve_i(r, i)
+    arraytable(DataFrame(named_solve(b3[parse(Int, i)], JSON3.read(r.body))))
 end
 
 # doing this we can take the outer product of the EMA functions that return dataframes and the content-type serializations for the output type (DataFrame)
@@ -102,6 +110,7 @@ function register!()
     # @post "/prob_id" 
     @post "/solve/{i}" json_solve
     @post "/solve/{i}/CSV" csv_solve
+    @post "/named_solve/{i}" named_solve_i
 end
 
 function run!()
