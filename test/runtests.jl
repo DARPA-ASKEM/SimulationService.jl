@@ -1,3 +1,4 @@
+using SimulationService, AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP, Catlab.CategoricalAlgebra, Test, Catlab.CategoricalAlgebra.FinSets, Bijections, ModelingToolkit, OrdinaryDiffEq, DifferentialEquations, OrderedCollections, NamedTupleTools
 using SimulationService
 using AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP
 using Catlab.CategoricalAlgebra
@@ -6,11 +7,14 @@ using Catlab.CategoricalAlgebra.FinSets
 using Bijections
 using ModelingToolkit, OrdinaryDiffEq, DifferentialEquations
 using OrderedCollections, NamedTupleTools
+using EasyModelAnalysis
+
+# 117.911560 seconds (147.98 M allocations: 9.807 GiB, 5.04% gc time, 10.70% compilation time: 69% of which was recompilation)
 @info "usings"
 logdir = joinpath(@__DIR__, "logs")
 mkpath(logdir)
 
-register!() 
+register!()
 
 m = _seird = AlgebraicPetri.LabelledPetriNet(
     [:S, :E, :I, :R, :D],
@@ -39,35 +43,46 @@ m3 = _seird3 = AlgebraicPetri.LabelledPetriNet(
 
 j = mj = JSON.json(generate_json_acset(m))
 j2 = mj2 = JSON.json(generate_json_acset(m2))
+j3 = mj3 = JSON.json(generate_json_acset(m3))
+
+write(joinpath(logdir, "petri.json"), j)
 
 @info """add models to "database" """
-bij_id!(b, m)
-bij_id!(b, m2)
-bij_id!(b, m3)
-
-@info """test that we can access the id of the petrinet"""
-req = HTTP.Request("POST", "/petri_id", [], j)
+req = HTTP.Request("POST", "/model", [], j)
 @test parse(Int, String(internalrequest(req).body)) == 1
-
-req = HTTP.Request("POST", "/petri_id", [], JSON.json(generate_json_acset(m2)))
+req = HTTP.Request("POST", "/model", [], j2)
 @test parse(Int, String(internalrequest(req).body)) == 2
+req = HTTP.Request("POST", "/model", [], j3)
+@test parse(Int, String(internalrequest(req).body)) == 3
+
+
+# bij_id!(b, m)
+# bij_id!(b, m2)
+# bij_id!(b, m3)
+
+# @info """test that we can access the id of the petrinet"""
+# req = HTTP.Request("POST", "/petri_id", [], j)
+# @test parse(Int, String(internalrequest(req).body)) == 1
+
+# req = HTTP.Request("POST", "/petri_id", [], JSON.json(generate_json_acset(m2)))
+# @test parse(Int, String(internalrequest(req).body)) == 2
 
 @info """add ODESystems to "database" """
 bij_id!(b2, ODESystem(m))
 bij_id!(b2, ODESystem(m2))
 bij_id!(b2, ODESystem(m3))
 
-req = HTTP.Request("POST", "/sys_id", [], JSON.json(generate_json_acset(m)))
-@test parse(Int, String(internalrequest(req).body)) == 1
+# req = HTTP.Request("POST", "/sys_id", [], JSON.json(generate_json_acset(m)))
+# @test parse(Int, String(internalrequest(req).body)) == 1
 
 @info "solve via POST"
 sys = ODESystem(m)
 sts = states(sys)
 ps = parameters(sys)
 
-u0 = rand(length(sts))
+u0 = zeros(length(sts))
 tspan = (0, 100)
-p = rand(length(ps))
+p = ones(length(ps))
 
 prob = ODEProblem(sys, u0, tspan, p)
 bij_id!(b3, prob)
@@ -109,3 +124,103 @@ csv_resp = internalrequest(req)
 fn = joinpath(logdir, "solve_1_post_body.json")
 JSON3.write(fn, post_body_dict)
 @test isfile(fn)
+
+defs = ModelingToolkit.defaults(sys)
+
+new_defs = [states(sys) .=> zeros(length(states(sys))); parameters(sys) .=> ones(length(parameters(sys)))]
+
+prob2 = remake(prob; u0=new_defs, p=new_defs)
+
+# named_post supports tspan, u0, p, and kws
+named_post = Dict("u0" => Dict(["S" => 0.9, "E"=>0.1, "I"=>0.1]), "p"=>Dict("exp" => 1, "conv"=>1, "rec"=>0.5, "death"=>0.25), "tspan" => [0, 100], "kws" => Dict(["saveat" => 0.1, "abstol" => 1e-7, "reltol" => 1e-7]))
+named_j = JSON.json(named_post)
+write(joinpath(logdir, "named_post.json"), named_j)
+
+new_u0 = named_json_to_defaults_map(named_post["u0"], states(sys))
+new_p = named_json_to_defaults_map(named_post["p"], parameters(sys))
+@test eltype(first.(collect(new_u0))) <: Symbolics.Symbolic
+prob2 = named_remake(prob, named_post)
+# (; S, E, exp) = prob.f.sys
+# S = @nonamespace(S)
+@variables t S(t) E(t)
+@parameters exp
+
+@test prob[S] != new_u0[S]
+@test prob2[S] == new_u0[S]
+
+# just a reminder that setindex and getindex on prob works with Symbolics
+# although remake seems more effective here
+# [prob[k] = v for (k, v) in new_defs]
+
+# register!()
+
+named_sol = solve(prob2)
+req = HTTP.Request("POST", "/named_solve/1", [], named_j)
+resp = internalrequest(req)
+named_resp_df = DataFrame(jsontable(resp.body))
+@test DataFrame(named_sol) == named_resp_df
+
+
+# @parameters S
+# @variables t S(t)
+# D = Differential(t)
+# [D(S) ~ -S*S]
+
+# * solve
+# * get_uncertainty_forecast
+# * get_sensitivity
+# * datafit
+# * bayesian_datafit
+
+# get_uncertainty_forecast(prob, sym, t, uncertainp, samples)
+# get_sensitivity(prob, t, x, pbounds; samples = 1000)
+
+# ""
+# macro wrap_to_endpoint(f)
+#     return quote
+#         function $(f)(args...; kws...)
+#             return $(f)(args...; kws...)
+#         end
+#     end
+# end
+
+# swaggermarkdown.jl
+# add the curl commands
+# add a petri-net to the database
+# doc the endpoints for swagger
+# use split p and u0 instead of defaults for named_solve
+# wrap datafit/bayesian datafit to endpoints
+
+register!()
+# serve()
+
+# # run this in another terminal
+# cmd = `
+# curl --location --request POST 'localhost:8080/petri_id/' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/petri_post.json'
+# `
+
+# cmd = `
+# curl --location --request POST 'localhost:8080/solve/1' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/solve_1_post_body.json'
+# `
+
+
+
+# cmd = `
+
+# `
+# cmd = `
+
+# `
+# curl --location --request POST 'localhost:8080/model/' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/petri_post.json'
+
+# curl --location --request POST 'localhost:8080/named_solve/1' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/named_solve.json'
+
+# s = read(cmd, String)
