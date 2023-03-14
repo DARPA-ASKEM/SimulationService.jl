@@ -135,7 +135,7 @@ prob2 = remake(prob; u0=new_defs, p=new_defs)
 
 # named_post supports tspan, u0, p, and kws
 named_post = Dict("u0" => Dict(["S" => 0.9, "E"=>0.1, "I"=>0.1]), "p"=>Dict("exp" => 1, "conv"=>1, "rec"=>0.5, "death"=>0.25), "tspan" => [0, 100], "kws" => Dict(["saveat" => 0.1, "abstol" => 1e-7, "reltol" => 1e-7]))
-named_j = JSONBase.json(named_post)
+named_j = JSON.json(named_post)
 write(joinpath(logdir, "named_post.json"), named_j)
 
 new_u0 = named_json_to_defaults_map(named_post["u0"], states(sys))
@@ -209,18 +209,20 @@ curl --location --request POST 'localhost:8080/solve/1' \
 --data-binary '@data/solve_1_post_body.json'
 `
 
-cmd = `
-curl --location --request POST 'localhost:8080/named_solve/1' \
---header 'Content-Type: application/json' \
---data-binary '@data/named_solve.json'
-`
+
 
 cmd = `
+
+`
+cmd = `
+
+`
 curl --location --request POST 'localhost:8080/model/' \
 --header 'Content-Type: application/json' \
 --data-binary '@data/petri_post.json'
-`
 
-
+curl --location --request POST 'localhost:8080/named_solve/1' \
+--header 'Content-Type: application/json' \
+--data-binary '@data/named_solve.json'
 
 s = read(cmd, String)
