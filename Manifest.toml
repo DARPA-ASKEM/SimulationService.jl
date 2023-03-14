@@ -2,7 +2,7 @@
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "76a690ef282df685eaa6fccd83d3f5cb81544ed9"
+project_hash = "3a13c4aa48ee34dee2084f250e86d21c198d95c9"
 
 [[deps.AbstractAlgebra]]
 deps = ["GroupsCore", "InteractiveUtils", "LinearAlgebra", "MacroTools", "Markdown", "Random", "RandomExtensions", "SparseArrays", "Test"]
@@ -53,9 +53,7 @@ version = "0.7.4"
 
 [[deps.AdvancedPS]]
 deps = ["AbstractMCMC", "Distributions", "Libtask", "Random", "Random123", "StatsFuns"]
-git-tree-sha1 = "771a5a9edc33334798f875d9edd46b16222dc334"
-repo-rev = "master"
-repo-url = "https://github.com/TuringLang/AdvancedPS.jl"
+git-tree-sha1 = "4d73400b3583147b1b639794696c78202a226584"
 uuid = "576499cb-2369-40b2-a588-c64705576edc"
 version = "0.4.3"
 
