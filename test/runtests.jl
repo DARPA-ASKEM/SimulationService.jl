@@ -1,5 +1,4 @@
-@time_imports using SimulationService, AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP, Catlab.CategoricalAlgebra, Test, Catlab.CategoricalAlgebra.FinSets, Bijections, ModelingToolkit, OrdinaryDiffEq, DifferentialEquations, OrderedCollections, NamedTupleTools
-@time begin
+using SimulationService, AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP, Catlab.CategoricalAlgebra, Test, Catlab.CategoricalAlgebra.FinSets, Bijections, ModelingToolkit, OrdinaryDiffEq, DifferentialEquations, OrderedCollections, NamedTupleTools
 using SimulationService
 using AlgebraicPetri, Catlab, JSON, JSON3, JSONTables, CSV, DataFrames, Oxygen, HTTP
 using Catlab.CategoricalAlgebra
@@ -8,9 +7,8 @@ using Catlab.CategoricalAlgebra.FinSets
 using Bijections
 using ModelingToolkit, OrdinaryDiffEq, DifferentialEquations
 using OrderedCollections, NamedTupleTools
-using JSONBase
 using EasyModelAnalysis
-end
+
 # 117.911560 seconds (147.98 M allocations: 9.807 GiB, 5.04% gc time, 10.70% compilation time: 69% of which was recompilation)
 @info "usings"
 logdir = joinpath(@__DIR__, "logs")

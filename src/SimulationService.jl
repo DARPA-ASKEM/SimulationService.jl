@@ -50,7 +50,7 @@ function post_model(r)
         push!(model_db, (; petri, sys, prob))
     end
     ids = [id, id2]
-    @info "" ids nrow(model_db)
+    # @info "" ids nrow(model_db)
     @assert allequal(ids)
     id
 end
