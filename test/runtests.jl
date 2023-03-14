@@ -194,35 +194,35 @@ named_resp_df = DataFrame(jsontable(resp.body))
 # wrap datafit/bayesian datafit to endpoints
 
 register!()
-serve()
+# serve()
 
-# run this in another terminal
-cmd = `
-curl --location --request POST 'localhost:8080/petri_id/' \
---header 'Content-Type: application/json' \
---data-binary '@data/petri_post.json'
-`
+# # run this in another terminal
+# cmd = `
+# curl --location --request POST 'localhost:8080/petri_id/' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/petri_post.json'
+# `
 
-cmd = `
-curl --location --request POST 'localhost:8080/solve/1' \
---header 'Content-Type: application/json' \
---data-binary '@data/solve_1_post_body.json'
-`
+# cmd = `
+# curl --location --request POST 'localhost:8080/solve/1' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/solve_1_post_body.json'
+# `
 
 
 
-cmd = `
+# cmd = `
 
-`
-cmd = `
+# `
+# cmd = `
 
-`
-curl --location --request POST 'localhost:8080/model/' \
---header 'Content-Type: application/json' \
---data-binary '@data/petri_post.json'
+# `
+# curl --location --request POST 'localhost:8080/model/' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/petri_post.json'
 
-curl --location --request POST 'localhost:8080/named_solve/1' \
---header 'Content-Type: application/json' \
---data-binary '@data/named_solve.json'
+# curl --location --request POST 'localhost:8080/named_solve/1' \
+# --header 'Content-Type: application/json' \
+# --data-binary '@data/named_solve.json'
 
-s = read(cmd, String)
+# s = read(cmd, String)
