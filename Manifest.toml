@@ -65,11 +65,11 @@ version = "0.1.6"
 
 [[deps.AlgebraicPetri]]
 deps = ["Catlab", "GeneralizedGenerated", "LabelledArrays", "LinearAlgebra", "Requires", "StatsBase"]
-git-tree-sha1 = "7111ff0641c5db836de625668e44dc30f4710d6e"
-repo-rev = "aj/defs"
-repo-url = "https://github.com/anandijain/AlgebraicPetri.jl"
+git-tree-sha1 = "c3ee20b6f3bab76cf3fabddf5353c4753695bbd1"
+repo-rev = "master"
+repo-url = "https://github.com/AlgebraicJulia/AlgebraicPetri.jl"
 uuid = "4f99eebe-17bf-4e98-b6a1-2c4f205a959b"
-version = "0.8.4"
+version = "0.8.5"
 
 [[deps.ArgCheck]]
 git-tree-sha1 = "a3a402a35a2f7e0b87828ccabbd5ebfbebe356b4"
