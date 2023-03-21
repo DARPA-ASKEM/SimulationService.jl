@@ -8,9 +8,7 @@ RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate();'
 
 # Install local package
 COPY src/ /sim-service/src/
-RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.resolve();'
-RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.precompile();'
-RUN julia -e 'using Pkg; Pkg.activate("."); using SimulationService;'
+RUN julia -e 'using Pkg; Pkg.activate("."); Pkg.resolve(); Pkg.precompile(); using SimulationService;'
 
 EXPOSE 8080
 CMD [ "julia", "-e", "using Pkg; Pkg.activate(\".\"); using SimulationService; SimulationService.run!();" ]
